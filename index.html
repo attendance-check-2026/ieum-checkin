@@ -1,1 +1,133 @@
 const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScKd7F-ev04ijd6DTya3jE58yUgggTg1UEGeg0-aiTMav_tcA/viewform";
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEUM 체육대회 출석 인증</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px 20px;
+            background: #f4f4f9;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: inline-block;
+            max-width: 350px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>📍 IEUM 현장 출석</h2>
+        <p>
+            고척근린공원 현장에서만<br>
+            출석 제출이 가능합니다.
+        </p>
+
+        <button onclick="checkLocation()">
+            위치 확인 및 출석하기
+        </button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const TARGET_LAT = 37.5012;
+        const TARGET_LNG = 126.8521;
+        const MAX_DISTANCE = 150;
+
+        const GOOGLE_FORM_URL = "여기에_네_구글폼_주소_붙여넣기";
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+            return R * 2 * Math.atan2(
+                Math.sqrt(a),
+                Math.sqrt(1 - a)
+            );
+        }
+
+        function checkLocation() {
+            const statusDiv = document.getElementById("status");
+
+            statusDiv.style.color = "#333";
+            statusDiv.innerText = "현재 위치 확인 중...";
+
+            if (!navigator.geolocation) {
+                statusDiv.innerText =
+                    "이 브라우저는 위치 서비스를 지원하지 않습니다.";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const dist = getDistance(
+                        pos.coords.latitude,
+                        pos.coords.longitude,
+                        TARGET_LAT,
+                        TARGET_LNG
+                    );
+
+                    if (dist <= MAX_DISTANCE) {
+                        statusDiv.style.color = "#10b981";
+                        statusDiv.innerText =
+                            "✅ 현장 인증 성공! 출석 페이지로 이동합니다.";
+
+                        setTimeout(() => {
+                            location.href = GOOGLE_FORM_URL;
+                        }, 1000);
+                    } else {
+                        statusDiv.style.color = "#ef4444";
+                        statusDiv.innerText =
+                            `❌ 행사장 외부에 있습니다. (현재 거리: ${Math.round(dist)}m)`;
+                    }
+                },
+                () => {
+                    statusDiv.style.color = "#ef4444";
+                    statusDiv.innerText =
+                        "⚠️ 위치 접근을 허용해야 출석이 가능합니다.";
+                },
+                {
+                    enableHighAccuracy: true
+                }
+            );
+        }
+    </script>
+</body>
+</html>
